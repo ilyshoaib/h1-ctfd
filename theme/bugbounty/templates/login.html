@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container mt-auth">
+    <div class="mt-auth-card">
+      <div class="mt-auth-head">
+        <div class="mt-badge">&#9670; Agent Access</div>
+        <h1 class="mt-auth-title">{% trans %}Welcome Back{% endtrans %}</h1>
+        <p class="mt-auth-sub">{% trans %}Log in to continue the hunt.{% endtrans %}</p>
+      </div>
+
+      {% include "components/errors.html" %}
+
+      {% if integrations.mlc() %}
+        <a class="btn btn-outline-secondary btn-lg w-100" href="{{ url_for('auth.oauth_login') }}">
+          Login with Major League Cyber
+        </a>
+        <hr>
+      {% endif %}
+
+      {% with form = Forms.auth.LoginForm() %}
+        <form method="post" accept-charset="utf-8">
+          <div class="mb-3">
+            <b>
+              {{ form.name.label(class="form-label") }}
+              <span class="text-danger">*</span>
+            </b>
+            {{ form.name(class="form-control", value=name, autocomplete="username email") }}
+          </div>
+
+          <div class="mb-3">
+            <b>
+              {{ form.password.label(class="form-label") }}
+              <span class="text-danger">*</span>
+            </b>
+            {{ form.password(class="form-control", value=password, autocomplete="current-password") }}
+          </div>
+
+          <div class="mt-auth-actions">
+            <a href="{{ url_for('auth.reset_password') }}">
+              {% trans %}Forgot your password?{% endtrans %}
+            </a>
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+
+          {{ form.nonce() }}
+        </form>
+      {% endwith %}
+
+      {% if registration_visible() %}
+        <div class="mt-auth-alt">
+          {% trans %}New here?{% endtrans %}
+          <a href="{{ url_for('auth.register') }}">{% trans %}Create an account{% endtrans %}</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

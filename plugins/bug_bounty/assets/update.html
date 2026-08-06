@@ -1,0 +1,43 @@
+{% extends "admin/challenges/update.html" %}
+
+{% block attribution %}
+<div class="form-group">
+	<label>In Scope<br>
+		<small class="form-text text-muted">Targets/URLs and testing rules that are in scope.</small>
+	</label>
+	<textarea class="form-control" name="scope" rows="4">{{ challenge.scope | default('', true) }}</textarea>
+</div>
+<div class="form-group">
+	<label>Out of Scope<br>
+		<small class="form-text text-muted">What is off-limits.</small>
+	</label>
+	<textarea class="form-control" name="out_of_scope" rows="3">{{ challenge.out_of_scope | default('', true) }}</textarea>
+</div>
+<div class="row">
+	<div class="col-md-3 form-group">
+		<label>Reward — Low</label>
+		<input type="number" class="form-control" name="reward_low" value="{{ challenge.reward_low | default(0, true) }}">
+	</div>
+	<div class="col-md-3 form-group">
+		<label>Reward — Medium</label>
+		<input type="number" class="form-control" name="reward_medium" value="{{ challenge.reward_medium | default(0, true) }}">
+	</div>
+	<div class="col-md-3 form-group">
+		<label>Reward — High</label>
+		<input type="number" class="form-control" name="reward_high" value="{{ challenge.reward_high | default(0, true) }}">
+	</div>
+	<div class="col-md-3 form-group">
+		<label>Reward — Critical</label>
+		<input type="number" class="form-control" name="reward_critical" value="{{ challenge.reward_critical | default(0, true) }}">
+	</div>
+</div>
+{% endblock %}
+
+{% block value %}
+<input type="hidden" name="value" value="{{ challenge.value | default(0, true) }}">
+{% endblock %}
+
+{% block function %}{% endblock %}
+{% block initial %}{% endblock %}
+{% block decay %}{% endblock %}
+{% block minimum %}{% endblock %}

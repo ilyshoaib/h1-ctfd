@@ -1,0 +1,169 @@
+{% extends "admin/base.html" %}
+
+{% set status_colors = {
+  "pending": "#6c757d", "triaging": "#17a2b8", "accepted": "#28a745",
+  "rejected": "#dc3545", "duplicate": "#ffc107", "informative": "#6c757d",
+  "not_applicable": "#dc3545", "spam": "#b71c1c"
+} %}
+
+{% block content %}
+<div class="container">
+	<div class="row">
+		<div class="col-md-12 mt-3">
+			<a href="{{ url_for('bug_bounty.admin_reports') }}">&larr; All reports</a>
+		</div>
+	</div>
+
+	<div class="row">
+		<!-- Report -->
+		<div class="col-md-7 mt-3">
+			<h2 class="mb-1">{{ report.title }}</h2>
+			<p class="text-muted">
+				Target: <strong>{{ challenge.name if challenge else '—' }}</strong>
+				&middot; Account: <strong>{{ account }}</strong>
+				&middot; {{ report.date.strftime('%Y-%m-%d %H:%M') if report.date else '' }}
+				&middot;
+				<span class="badge" style="background:{{ status_colors.get(report.status, '#6c757d') }};color:#fff;">{{ status_labels.get(report.status, report.status) }}</span>
+			</p>
+
+			<h5 class="mt-4">Summary</h5>
+			<div class="bug-md">{{ description_html | safe }}</div>
+
+			{% if report.steps %}
+			<h5 class="mt-4">Steps to Reproduce</h5>
+			<div class="bug-md">{{ steps_html | safe }}</div>
+			{% endif %}
+
+			{% if report.impact %}
+			<h5 class="mt-4">Impact</h5>
+			<div class="bug-md">{{ impact_html | safe }}</div>
+			{% endif %}
+
+			{% if report.video_url %}
+			<h5 class="mt-4">Video</h5>
+			<a href="{{ report.video_url }}" target="_blank" rel="noopener">{{ report.video_url }}</a>
+			{% endif %}
+
+			{% if report.status == 'duplicate' and duplicate_original %}
+			<div class="alert alert-warning mt-4" style="font-size:.9rem;">
+				<i class="fas fa-clone"></i>
+				Duplicate of
+				<a href="{{ url_for('bug_bounty.admin_report_detail', report_id=duplicate_original.id) }}">
+					report #{{ duplicate_original.id }} — {{ duplicate_original.title }}
+				</a>
+			</div>
+			{% endif %}
+
+			{% if report.evidence %}
+			<h5 class="mt-4">Evidence</h5>
+			<div class="row">
+				{% for e in report.evidence %}
+				<div class="col-md-4 mb-3">
+					<a href="{{ url_for('bug_bounty.report_file', file_id=e.file_id) }}" target="_blank" rel="noopener">
+						<img src="{{ url_for('bug_bounty.report_file', file_id=e.file_id) }}"
+						     class="img-fluid" style="border:1px solid #ddd;border-radius:6px;"
+						     alt="{{ e.filename }}">
+					</a>
+					<small class="text-muted d-block text-truncate">{{ e.filename }}</small>
+				</div>
+				{% endfor %}
+			</div>
+			{% endif %}
+
+			<h5 class="mt-4">Discussion</h5>
+			{% if not comments %}
+			<p class="text-muted" style="font-size:.9rem;">No messages yet. Replies here are visible to the hunter.</p>
+			{% endif %}
+			{% for c in comments %}
+			<div class="card mb-2 {{ 'border-primary' if c.staff }}">
+				<div class="card-body py-2 px-3">
+					<div class="d-flex align-items-center mb-1" style="gap:.5rem;">
+						<strong style="font-size:.85rem;">{{ c.author }}</strong>
+						{% if c.staff %}<span class="badge bg-primary" style="font-size:.65rem;">STAFF</span>{% endif %}
+						<small class="text-muted ms-auto"><span data-time="{{ c.date }}"></span></small>
+					</div>
+					<div class="bug-md" style="font-size:.9rem;">{{ c.content_html | safe }}</div>
+				</div>
+			</div>
+			{% endfor %}
+			<form method="POST" action="{{ url_for('bug_bounty.post_comment', report_id=report.id) }}" class="mt-2 mb-4">
+				<input type="hidden" name="nonce" value="{{ Session.nonce }}">
+				<input type="hidden" name="redirect" value="1">
+				<textarea class="form-control" name="content" rows="3"
+				          placeholder="Reply to the hunter (markdown supported)…" required></textarea>
+				<button class="btn btn-primary btn-sm mt-2" type="submit">
+					<i class="fas fa-reply"></i> Send Reply
+				</button>
+			</form>
+		</div>
+
+		<!-- Review panel -->
+		<div class="col-md-5 mt-3">
+			<div class="card">
+				<div class="card-header"><strong>Review &amp; Award</strong></div>
+				<div class="card-body">
+					{% if challenge %}
+					<div class="alert alert-secondary" style="font-size:0.85rem;">
+						Suggested rewards —
+						Low <strong>{{ challenge.reward_low | default(0, true) }}</strong>,
+						Medium <strong>{{ challenge.reward_medium | default(0, true) }}</strong>,
+						High <strong>{{ challenge.reward_high | default(0, true) }}</strong>,
+						Critical <strong>{{ challenge.reward_critical | default(0, true) }}</strong>
+					</div>
+					{% endif %}
+
+					<form method="POST" action="{{ url_for('bug_bounty.admin_report_review', report_id=report.id) }}">
+						<input type="hidden" name="nonce" value="{{ Session.nonce }}">
+
+						<div class="form-group">
+							<label>Severity</label>
+							<select class="form-control custom-select" name="severity">
+								<option value="">—</option>
+								{% for s in severities %}
+								<option value="{{ s }}" {% if report.severity == s %}selected{% endif %}>{{ s|capitalize }}</option>
+								{% endfor %}
+							</select>
+						</div>
+
+						<div class="form-group">
+							<label>Status</label>
+							<select class="form-control custom-select" name="status">
+								{% for s in statuses %}
+								<option value="{{ s }}" {% if report.status == s %}selected{% endif %}>{{ status_labels.get(s, s|capitalize) }}</option>
+								{% endfor %}
+							</select>
+						</div>
+
+						<div class="form-group" id="dup-of-group">
+							<label>Duplicate of (report #)</label>
+							<input type="text" class="form-control" name="duplicate_of"
+							       value="{{ report.duplicate_of or '' }}" placeholder="e.g. 12">
+							<small class="form-text text-muted">
+								Only used when Status is <strong>Duplicate</strong> — links this report to the original.
+							</small>
+						</div>
+
+						<div class="form-group">
+							<label>Points</label>
+							<input type="number" class="form-control" name="awarded_value" value="{{ report.awarded_value or 0 }}">
+							<small class="form-text text-muted">
+								When Status is <strong>Accepted</strong>, this many points are <strong>added</strong> to the
+								hunter's score. When Status is <strong>Not Applicable</strong> or <strong>Spam</strong>, the
+								same amount is <strong>deducted</strong> (a negative award). Any other status grants nothing.
+								Changing the status re-reconciles the award, so scores never double-count.
+							</small>
+						</div>
+
+						<div class="form-group">
+							<label>Notes to Hunter</label>
+							<textarea class="form-control" name="reviewer_notes" rows="4">{{ report.reviewer_notes or '' }}</textarea>
+						</div>
+
+						<button class="btn btn-success btn-block" type="submit">Save Review</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

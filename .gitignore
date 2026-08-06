@@ -1,0 +1,22 @@
+# Secrets / local
+.env
+*.local
+backup/
+*.log
+
+# Node / build caches (theme source rebuilds from yarn.lock)
+node_modules/
+.vite/
+dist/
+dist-ssr/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.sw?

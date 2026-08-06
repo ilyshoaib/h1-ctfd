@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container mt-auth">
+    <div class="mt-auth-card">
+      <div class="mt-auth-head">
+        <div class="mt-badge">&#9670; Join The Hunt</div>
+        <h1 class="mt-auth-title">{% trans %}Create Account{% endtrans %}</h1>
+        <p class="mt-auth-sub">{% trans %}Register to start capturing flags.{% endtrans %}</p>
+      </div>
+
+      {% include "components/errors.html" %}
+
+      {% if integrations.mlc() %}
+        <a class="btn btn-outline-secondary btn-lg w-100" href="{{ url_for('auth.oauth_login') }}">
+          Login with Major League Cyber
+        </a>
+        <hr>
+      {% endif %}
+
+      {% with form = Forms.auth.RegistrationForm() %}
+
+        {% from "macros/forms.html" import render_extra_fields %}
+
+        <form method="post" accept-charset="utf-8" role="form">
+
+          <div class="mb-3">
+            <b>
+              {{ form.name.label(class="form-label") }}
+              <span class="text-danger">*</span>
+            </b>
+            {{ form.name(class="form-control", value=name, autocomplete="username") }}
+            <small class="form-text text-muted">
+              {% trans %}Your username on the site{% endtrans %}
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <b>
+              {{ form.email.label(class="form-label") }}
+              <span class="text-danger">*</span>
+            </b>
+            {{ form.email(class="form-control", value=email, autocomplete="email") }}
+            <small class="form-text text-muted">
+              {% trans %}Never shown to the public{% endtrans %}
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <b>
+              {{ form.password.label(class="form-label") }}
+              <span class="text-danger">*</span>
+            </b>
+            {{ form.password(class="form-control", value=password, autocomplete="new-password") }}
+            <small class="form-text text-muted">
+              {% trans %}Password used to log into your account{% endtrans %}
+            </small>
+          </div>
+
+          {{ form.nonce() }}
+
+          {{ render_extra_fields(form.extra) }}
+
+          <div class="pt-2">
+            {{ form.submit(class="btn btn-primary w-100 btn-lg") }}
+          </div>
+
+          {% if Configs.tos_or_privacy %}
+            <div class="pt-3 text-center">
+              <small class="text-muted">
+                {% trans trimmed privacy_link=Configs.privacy_link, tos_link=Configs.tos_link %}
+                By registering, you agree to the
+                <a href="{{ privacy_link }}" target="_blank">privacy policy</a>
+                and <a href="{{ tos_link }}" target="_blank">terms of service</a>
+                {% endtrans %}
+              </small>
+            </div>
+          {% endif %}
+        </form>
+      {% endwith %}
+
+      <div class="mt-auth-alt">
+        {% trans %}Already have an account?{% endtrans %}
+        <a href="{{ url_for('auth.login') }}">{% trans %}Log in{% endtrans %}</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,76 @@
+# Example CTFd deployment wiring the bugbounty theme + bug_bounty plugin.
+# This is a REFERENCE — adapt it to your setup. Secrets come from a .env
+# file (see .env.example); nothing sensitive is hardcoded here.
+#
+# Assumes you have a CTFd checkout and have copied:
+#   theme/bugbounty     -> CTFd/themes/bugbounty
+#   plugins/bug_bounty  -> CTFd/plugins/bug_bounty
+services:
+  ctfd:
+    build: .
+    restart: always
+    # Bind to loopback so the raw app isn't exposed publicly — nginx proxies
+    # to it over the internal network. Do NOT publish 0.0.0.0:8000.
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - UPLOAD_FOLDER=/var/uploads
+      - DATABASE_URL=mysql+pymysql://${MARIADB_USER}:${MARIADB_PASSWORD}@db/${MARIADB_DATABASE}
+      - REDIS_URL=redis://cache:6379
+      - WORKERS=${WORKERS:-2}
+      - SECRET_KEY=${SECRET_KEY}
+      - LOG_FOLDER=/var/log/CTFd
+      - ACCESS_LOG=-
+      - ERROR_LOG=-
+      - REVERSE_PROXY=true
+    volumes:
+      - .data/CTFd/logs:/var/log/CTFd
+      - .data/CTFd/uploads:/var/uploads
+    depends_on:
+      - db
+      - cache
+    networks:
+      default:
+      internal:
+
+  nginx:
+    image: nginx:stable
+    restart: always
+    volumes:
+      - ./conf/nginx/http.conf:/etc/nginx/nginx.conf:ro
+      - /var/www/certbot:/var/www/certbot
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - ctfd
+    networks:
+      default:
+
+  db:
+    image: mariadb:10.11
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+    volumes:
+      - .data/mysql:/var/lib/mysql
+    networks:
+      internal:
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
+
+  cache:
+    image: redis:4
+    restart: always
+    volumes:
+      - .data/redis:/data
+    networks:
+      internal:
+
+networks:
+  default:
+  internal:
+    internal: true

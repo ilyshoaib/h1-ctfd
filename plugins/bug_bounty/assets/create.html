@@ -1,0 +1,50 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block header %}
+<div class="alert alert-secondary" role="alert">
+	<strong>Bug Bounty target.</strong> Hunters submit vulnerability reports (not flags).
+	Points are awarded manually when you triage each report. Use <em>Message</em> for the
+	program brief/rules, and set the scope and per-severity suggested rewards below.
+</div>
+{% endblock %}
+
+{% block attribution %}
+<div class="form-group">
+	<label>In Scope<br>
+		<small class="form-text text-muted">Targets/URLs and testing rules that are in scope.</small>
+	</label>
+	<textarea class="form-control" name="scope" rows="4" placeholder="https://target.example.com&#10;*.api.example.com"></textarea>
+</div>
+<div class="form-group">
+	<label>Out of Scope<br>
+		<small class="form-text text-muted">What is off-limits.</small>
+	</label>
+	<textarea class="form-control" name="out_of_scope" rows="3" placeholder="Denial of service, social engineering, ..."></textarea>
+</div>
+<div class="row">
+	<div class="col-md-3 form-group">
+		<label>Reward — Low</label>
+		<input type="number" class="form-control" name="reward_low" value="50">
+	</div>
+	<div class="col-md-3 form-group">
+		<label>Reward — Medium</label>
+		<input type="number" class="form-control" name="reward_medium" value="150">
+	</div>
+	<div class="col-md-3 form-group">
+		<label>Reward — High</label>
+		<input type="number" class="form-control" name="reward_high" value="400">
+	</div>
+	<div class="col-md-3 form-group">
+		<label>Reward — Critical</label>
+		<input type="number" class="form-control" name="reward_critical" value="1000">
+	</div>
+</div>
+{% endblock %}
+
+{% block value %}
+<input type="hidden" name="value" value="0">
+{% endblock %}
+
+{% block type %}
+<input type="hidden" value="bug" name="type" id="chaltype">
+{% endblock %}

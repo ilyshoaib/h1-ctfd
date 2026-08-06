@@ -1,0 +1,50 @@
+{# Hunter stats strip for profile pages. Requires `user` in context and the
+   bug_bounty plugin (guarded by `is defined` so a disabled plugin degrades
+   gracefully). Styles are self-contained — no theme rebuild needed. #}
+{% if bug_hunter_stats is defined %}
+{% set hstats = bug_hunter_stats(user.id) %}
+<style>
+  .mt-hstats { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 1.4rem; }
+  .mt-hstat { min-width: 132px; padding: .85rem 1.2rem; border-radius: 14px;
+    border: 1px solid var(--mt-border, rgba(255,255,255,.1));
+    background: var(--mt-panel, rgba(255,255,255,.04)); text-align: center; }
+  .mt-hstat-num { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.1;
+    background: var(--mt-grad, linear-gradient(90deg,#22d3aa,#5d94ff)); -webkit-background-clip: text;
+    background-clip: text; -webkit-text-fill-color: transparent; }
+  .mt-hstat-label { font-family: 'JetBrains Mono', monospace; font-size: .6rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--mt-text-dim, #8b95a5); margin-top: .3rem; }
+  .mt-hsev { display: flex; justify-content: center; gap: 8px; margin-top: .9rem; flex-wrap: wrap; }
+  .mt-hsev span { font-family: 'JetBrains Mono', monospace; font-size: .66rem; font-weight: 700;
+    padding: .2rem .6rem; border-radius: 999px; border: 1px solid transparent; }
+  .mt-hsev-crit { color: #ff6b6b; border-color: rgba(255,107,107,.4) !important; }
+  .mt-hsev-high { color: #ffa94d; border-color: rgba(255,169,77,.4) !important; }
+  .mt-hsev-med  { color: #ffd43b; border-color: rgba(255,212,59,.4) !important; }
+  .mt-hsev-low  { color: #69db7c; border-color: rgba(105,219,124,.4) !important; }
+</style>
+<div class="mt-hstats">
+  <div class="mt-hstat">
+    <div class="mt-hstat-num">{{ hstats.total }}</div>
+    <div class="mt-hstat-label">Reports</div>
+  </div>
+  <div class="mt-hstat">
+    <div class="mt-hstat-num">{{ hstats.accepted }}</div>
+    <div class="mt-hstat-label">Accepted</div>
+  </div>
+  <div class="mt-hstat">
+    <div class="mt-hstat-num">{{ hstats.rate }}%</div>
+    <div class="mt-hstat-label">Acceptance</div>
+  </div>
+  <div class="mt-hstat">
+    <div class="mt-hstat-num">{{ hstats.reputation }}</div>
+    <div class="mt-hstat-label">Reputation</div>
+  </div>
+</div>
+{% if hstats.accepted %}
+<div class="mt-hsev">
+  {% if hstats.severities.critical %}<span class="mt-hsev-crit">CRITICAL &times;{{ hstats.severities.critical }}</span>{% endif %}
+  {% if hstats.severities.high %}<span class="mt-hsev-high">HIGH &times;{{ hstats.severities.high }}</span>{% endif %}
+  {% if hstats.severities.medium %}<span class="mt-hsev-med">MEDIUM &times;{{ hstats.severities.medium }}</span>{% endif %}
+  {% if hstats.severities.low %}<span class="mt-hsev-low">LOW &times;{{ hstats.severities.low }}</span>{% endif %}
+</div>
+{% endif %}
+{% endif %}

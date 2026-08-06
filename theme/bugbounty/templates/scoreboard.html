@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="jumbotron">
+    <div class="container">
+      <h1>
+        {% trans %}Scoreboard{% endtrans %}
+      </h1>
+    </div>
+  </div>
+
+  <div class="container">
+    {% include "components/errors.html" %}
+
+    {# Score-over-time graph is hidden until there is real solve time-series data.
+       Re-enable by restoring the #score-graph block (ScoreboardDetail). #}
+
+    <div id="scoreboard" x-data="ScoreboardList">
+      <template x-if="brackets.length && standings.length">
+        <div class="mt-bracket-nav">
+          <button :class="{'mt-bracket': true, 'active': !activeBracket}" @click="activeBracket=null">{% trans %}All{% endtrans %}</button>
+          <template x-for="bracket in brackets" :key="bracket.id">
+            <button :class="{'mt-bracket': true, 'active': activeBracket == bracket.id}" x-text="bracket.name" @click="activeBracket=bracket.id"></button>
+          </template>
+        </div>
+      </template>
+
+      {# ---- Podium: top 3 ---- #}
+      <template x-if="standings.length">
+        <div class="mt-podium">
+          <template x-if="standings.length >= 2">
+            <a class="mt-podium-slot rank-2" :href="standings[1].account_url">
+              <div class="mt-podium-medal">2</div>
+              <div class="mt-podium-avatar" x-text="(standings[1].name || '?').slice(0,1).toUpperCase()"></div>
+              <div class="mt-podium-name" x-text="standings[1].name"></div>
+              <div class="mt-podium-score"><span x-text="standings[1].score"></span> pts</div>
+            </a>
+          </template>
+
+          <template x-if="standings.length >= 1">
+            <a class="mt-podium-slot rank-1" :href="standings[0].account_url">
+              <div class="mt-podium-crown"><i class="fas fa-crown"></i></div>
+              <div class="mt-podium-medal">1</div>
+              <div class="mt-podium-avatar" x-text="(standings[0].name || '?').slice(0,1).toUpperCase()"></div>
+              <div class="mt-podium-name" x-text="standings[0].name"></div>
+              <div class="mt-podium-score"><span x-text="standings[0].score"></span> pts</div>
+            </a>
+          </template>
+
+          <template x-if="standings.length >= 3">
+            <a class="mt-podium-slot rank-3" :href="standings[2].account_url">
+              <div class="mt-podium-medal">3</div>
+              <div class="mt-podium-avatar" x-text="(standings[2].name || '?').slice(0,1).toUpperCase()"></div>
+              <div class="mt-podium-name" x-text="standings[2].name"></div>
+              <div class="mt-podium-score"><span x-text="standings[2].score"></span> pts</div>
+            </a>
+          </template>
+        </div>
+      </template>
+
+      {# ---- Full ranking list (4th onward) ---- #}
+      <template x-if="standings.length > 3">
+        <div class="mt-board">
+          <div class="mt-board-head">
+            <span>{% trans %}Rank{% endtrans %}</span>
+            <span>{{ get_mode_as_word(capitalize=True) }}</span>
+            <span>{% trans %}Score{% endtrans %}</span>
+          </div>
+          <template x-for="(s, i) in standings" :key="i">
+            <a class="mt-rank-row" :href="s.account_url" x-show="i >= 3">
+              <span class="mt-rank-num" x-text="i + 1"></span>
+              <span class="mt-rank-avatar" x-text="(s.name || '?').slice(0,1).toUpperCase()"></span>
+              <span class="mt-rank-name">
+                <span x-text="s.name"></span>
+                <template x-if="s.bracket_name">
+                  <span class="mt-rank-bracket" x-text="s.bracket_name"></span>
+                </template>
+              </span>
+              <span class="mt-rank-score" x-text="s.score"></span>
+            </a>
+          </template>
+        </div>
+      </template>
+
+      {# ---- Empty state ---- #}
+      <template x-if="!standings.length">
+        <div class="mt-empty">
+          <i class="fas fa-flag-checkered"></i>
+          <p>{% trans %}No teams on the board yet. Be the first to capture a flag.{% endtrans %}</p>
+        </div>
+      </template>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ Assets.js("assets/js/scoreboard.js") }}
+{% endblock %}

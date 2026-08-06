@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<div class="jumbotron">
+		<div class="container">
+			<h1>
+				{% trans %}Notifications{% endtrans %}
+			</h1>
+		</div>
+	</div>
+	{% set bug_status_colors = {
+		"pending": "#8b95a5", "triaging": "#17a2b8", "accepted": "#28c76f",
+		"rejected": "#ea5455", "duplicate": "#ffb703", "informative": "#8b95a5",
+		"not_applicable": "#ea5455", "spam": "#b71c1c", "comment": "#5d94ff"
+	} %}
+	{# bug_notifications is injected by the bug_bounty plugin's context
+	   processor; default to [] so this theme still renders without it. #}
+	{% set bug_notifications = bug_notifications | default([], true) %}
+	<div class="container">
+		{% if not notifications and not bug_notifications %}
+		<h2 class="text-center">
+			{% trans %}There are no notifications yet{% endtrans %}
+		</h2>
+		{% endif %}
+
+		{% for n in bug_notifications %}
+		<div class="card bg-body-tertiary mb-4" style="border-left:4px solid {{ bug_status_colors.get(n.status, '#8b95a5') }};">
+			<div class="card-body">
+				<h3 class="card-title d-flex align-items-center" style="gap:.6rem;">
+					<i class="fas fa-shield-halved" style="color:{{ bug_status_colors.get(n.status, '#8b95a5') }};"></i>
+					{{ n.title or "Report update" }}
+					{% if n.status %}
+					<span class="badge" style="background:{{ bug_status_colors.get(n.status, '#8b95a5') }};color:#fff;font-size:.7rem;text-transform:capitalize;">
+						{{ n.status.replace('_', ' ') }}
+					</span>
+					{% endif %}
+				</h3>
+				<blockquote class="blockquote mb-0">
+					<p class="mb-1">{{ n.message }}</p>
+					<small class="text-muted"><span data-time="{{ n.date | isoformat }}"></span></small>
+				</blockquote>
+			</div>
+		</div>
+		{% endfor %}
+
+		{% for notification in notifications %}
+		<div class="card bg-body-tertiary mb-4">
+			<div class="card-body">
+				<h3 class="card-title">{{ notification.title }}</h3>
+				<blockquote class="blockquote mb-0">
+					<p>{{ notification.html }}</p>
+					<small class="text-muted"><span data-time="{{ notification.date | isoformat }}"></span></small>
+				</blockquote>
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ Assets.js("assets/js/notifications.js") }}
+{% endblock %}
+

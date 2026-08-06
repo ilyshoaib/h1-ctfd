@@ -1,0 +1,63 @@
+{% extends "admin/base.html" %}
+
+{% set status_colors = {
+  "pending": "#6c757d", "triaging": "#17a2b8", "accepted": "#28a745",
+  "rejected": "#dc3545", "duplicate": "#ffc107", "informative": "#6c757d",
+  "not_applicable": "#dc3545", "spam": "#b71c1c"
+} %}
+
+{% block content %}
+<div class="jumbotron">
+	<div class="container">
+		<h1>Bug Reports</h1>
+		<p class="lead">Triage hunter-submitted vulnerability reports and award points.</p>
+	</div>
+</div>
+
+<div class="container">
+	<div class="mb-4">
+		<a class="btn btn-sm {{ 'btn-primary' if not active_status else 'btn-outline-secondary' }}"
+		   href="{{ url_for('bug_bounty.admin_reports') }}">All ({{ counts['all'] }})</a>
+		{% for s in statuses %}
+		<a class="btn btn-sm {{ 'btn-primary' if active_status == s else 'btn-outline-secondary' }}"
+		   href="{{ url_for('bug_bounty.admin_reports', status=s) }}">{{ status_labels.get(s, s|capitalize) }} ({{ counts[s] }})</a>
+		{% endfor %}
+	</div>
+
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Target</th>
+				<th>Account</th>
+				<th>Title</th>
+				<th>Severity</th>
+				<th>Status</th>
+				<th>Points</th>
+				<th>Date</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in rows %}
+			<tr>
+				<td>{{ row.r.id }}</td>
+				<td>{{ row.target }}</td>
+				<td>{{ row.account }}</td>
+				<td><a href="{{ url_for('bug_bounty.admin_report_detail', report_id=row.r.id) }}">{{ row.r.title }}</a></td>
+				<td>{{ (row.r.severity or '—')|capitalize }}</td>
+				<td>
+					<span class="badge" style="background:{{ status_colors.get(row.r.status, '#6c757d') }};color:#fff;">
+						{{ status_labels.get(row.r.status, row.r.status) }}
+					</span>
+				</td>
+				<td>{{ row.r.awarded_value or 0 }}</td>
+				<td>{{ row.r.date.strftime('%Y-%m-%d %H:%M') if row.r.date else '' }}</td>
+			</tr>
+			{% endfor %}
+			{% if not rows %}
+			<tr><td colspan="8" class="text-center text-muted py-4">No reports{{ ' with this status' if active_status }}.</td></tr>
+			{% endif %}
+		</tbody>
+	</table>
+</div>
+{% endblock %}

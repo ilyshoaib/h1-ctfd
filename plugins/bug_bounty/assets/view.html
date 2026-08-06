@@ -1,0 +1,270 @@
+{% extends "challenge.html" %}
+
+{% block submissions %}{% endblock %}
+{% block solves %}{% endblock %}
+{% block solution %}{% endblock %}
+
+{% block description %}
+<style>
+  /* ---- widen the modal into a portal + strip default challenge chrome ---- */
+  #challenge-window .modal-dialog { max-width: 1000px; }
+  #challenge-window .nav-tabs,
+  #challenge .challenge-name,
+  #challenge .challenge-value,
+  #challenge .challenge-tags,
+  #challenge .challenge-attribution,
+  #challenge .challenge-ratings,
+  #challenge .submit-row,
+  #challenge .notification-row { display: none !important; }
+  #challenge .modal-body { padding-top: 1.25rem; }
+
+  /* ---- portal shell ---- */
+  .bugp { font-family: var(--font-body); }
+  .bugp-header { margin-bottom: 1.4rem; }
+  .bugp-kicker {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--mt-link);
+    border: 1px solid var(--mt-border-glow); background: rgba(45,212,191,0.08);
+    padding: 0.3rem 0.7rem; border-radius: 999px;
+  }
+  .bugp-title {
+    font-family: var(--font-display); font-weight: 800; letter-spacing: 0.5px;
+    color: var(--mt-strong); font-size: 1.9rem; margin: 0.6rem 0 0;
+  }
+
+  .bugp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem; }
+  @media (max-width: 767px) { .bugp-grid { grid-template-columns: 1fr; } }
+  .bugp-col { min-width: 0; }
+
+  .bugp-block { margin-bottom: 1.3rem; }
+  .bugp-label {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--mt-text-dim);
+    margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;
+  }
+  .bugp-label-in { color: var(--mt-teal); }
+  .bugp-label-out { color: #ff6b81; }
+
+  .bugp-scope {
+    margin: 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5;
+    color: var(--mt-text); white-space: pre-wrap; word-break: break-word;
+    background: var(--mt-panel); border: 1px solid var(--mt-border);
+    border-left: 3px solid var(--mt-teal); border-radius: 10px; padding: 0.7rem 0.9rem;
+  }
+  .bugp-scope.oos { border-left-color: #ff3860; }
+
+  .bugp-rewards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+  @media (max-width: 480px) { .bugp-rewards { grid-template-columns: repeat(2, 1fr); } }
+  .bugp-reward {
+    display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    background: var(--mt-panel); border: 1px solid var(--mt-border);
+    border-top: 3px solid var(--mt-border); border-radius: 12px; padding: 0.6rem 0.3rem;
+  }
+  .bugp-reward span {
+    font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--mt-text-dim);
+  }
+  .bugp-reward b { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; color: var(--mt-strong); }
+  .bugp-reward.sev-low { border-top-color: #7c8ba3; }
+  .bugp-reward.sev-medium { border-top-color: #2dd4bf; }
+  .bugp-reward.sev-high { border-top-color: #ffb020; }
+  .bugp-reward.sev-critical { border-top-color: #ff3860; }
+
+  /* ---- actions column ---- */
+  .bugp-submit-btn { font-family: var(--font-head); font-weight: 700; }
+  .bug-form-title {
+    font-family: var(--font-head); font-weight: 700; color: var(--mt-strong);
+    font-size: 1.05rem; margin: 0 0 0.8rem;
+  }
+  #bug-form-wrap {
+    margin-top: 1rem; padding: 1.1rem; border: 1px solid var(--mt-border);
+    border-radius: 14px; background: var(--mt-panel);
+  }
+  .bug-md-hint {
+    font-size: 0.78rem; color: var(--mt-text-dim);
+    background: rgba(45,212,191,0.06); border: 1px solid var(--mt-border);
+    border-radius: 8px; padding: 0.5rem 0.7rem; margin-bottom: 1rem;
+  }
+  .bug-md-hint code { font-family: var(--font-mono); color: var(--mt-cyan); }
+  #bug-form-wrap .form-label {
+    font-family: var(--font-head); font-weight: 600; font-size: 0.85rem;
+    color: var(--mt-strong); margin-bottom: 0.3rem;
+  }
+  .bug-form-actions { display: flex; gap: 0.6rem; }
+
+  /* ---- your reports ---- */
+  .bug-my-reports { margin-top: 1.5rem; }
+  .bug-my-reports-head {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--mt-text-dim); margin-bottom: 0.6rem;
+  }
+  .bug-report-row {
+    background: var(--mt-panel); border: 1px solid var(--mt-border);
+    border-radius: 12px; padding: 0.7rem 0.9rem; margin-bottom: 0.6rem;
+  }
+  .bug-report-row-main { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; cursor: pointer; }
+  .bug-report-title { font-family: var(--font-head); font-weight: 600; color: var(--mt-strong); flex: 1 1 auto; }
+  .bug-report-status { text-transform: capitalize; font-family: var(--font-mono); font-size: 0.68rem; padding: 0.2rem 0.5rem; border-radius: 6px; }
+  .bug-report-sev {
+    font-family: var(--font-mono); font-size: 0.66rem; text-transform: capitalize;
+    color: var(--mt-text-dim); border: 1px solid var(--mt-border); border-radius: 6px; padding: 0.05rem 0.4rem;
+  }
+  .bug-report-points { color: var(--mt-teal); font-family: var(--font-mono); font-weight: 700; font-size: 0.8rem; }
+  .bug-report-points.bug-report-points-neg { color: #ff6b6b; }
+
+  /* Discussion thread */
+  .bug-report-dup { margin-top: .8rem; padding: .55rem .8rem; border: 1px solid rgba(255,183,3,.35);
+    background: rgba(255,183,3,.08); border-radius: 8px; font-size: .82rem; color: var(--mt-text); }
+  .bug-report-dup i { color: #ffb703; margin-right: .35rem; }
+  .bug-thread { display: flex; flex-direction: column; gap: .5rem; margin-bottom: .6rem; }
+  .bug-comment { border: 1px solid var(--mt-border); border-radius: 10px; padding: .55rem .8rem;
+    background: var(--mt-panel); }
+  .bug-comment-staff { border-color: rgba(93,148,255,.45); background: rgba(93,148,255,.07); }
+  .bug-comment-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .25rem; }
+  .bug-comment-author { font-weight: 700; font-size: .78rem; }
+  .bug-comment-badge { font-family: var(--font-mono); font-size: .58rem; letter-spacing: .1em;
+    font-weight: 700; padding: .1rem .4rem; border-radius: 5px; background: #5d94ff; color: #fff; }
+  .bug-comment-date { margin-left: auto; font-size: .7rem; color: var(--mt-text-dim); }
+  .bug-comment-body { font-size: .84rem; }
+  .bug-comment-body p:last-child { margin-bottom: 0; }
+  .bug-reply { display: flex; gap: .5rem; align-items: flex-end; }
+  .bug-reply-input { font-size: .84rem; }
+  .bug-reply-btn { flex: 0 0 auto; background: var(--mt-grad); color: #fff; font-family: var(--font-mono);
+    font-size: .78rem; font-weight: 700; border: 0; border-radius: 8px; padding: .5rem .9rem; }
+  .bug-reply-btn:disabled { opacity: .6; }
+  .bug-chevron { margin-left: auto; color: var(--mt-text-dim); transition: transform 0.15s ease; }
+  .bug-report-row-main.bug-open .bug-chevron { transform: rotate(180deg); }
+  .bug-report-detail { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--mt-border); }
+  .bug-detail-h {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--mt-text-dim); margin: 0.9rem 0 0.35rem;
+  }
+  .bug-report-note {
+    margin-top: 0.6rem; font-size: 0.85rem; color: var(--mt-text-dim);
+    border-left: 2px solid var(--mt-teal); padding-left: 0.6rem;
+  }
+  .bug-report-meta { margin-top: 0.6rem; font-size: 0.72rem; color: var(--mt-text-dim); font-family: var(--font-mono); }
+  .bug-evidence { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .bug-evidence-thumb { width: 92px; height: 66px; object-fit: cover; border-radius: 6px; border: 1px solid var(--mt-border); }
+
+  /* ---- rendered markdown ---- */
+  .bug-md { color: var(--mt-text); font-size: 0.9rem; line-height: 1.55; word-break: break-word; }
+  .bug-md p { margin-bottom: 0.5rem; }
+  .bug-md ul, .bug-md ol { padding-left: 1.2rem; margin-bottom: 0.5rem; }
+  .bug-md pre {
+    background: var(--mt-bg-2); border: 1px solid var(--mt-border); border-radius: 8px;
+    padding: 0.7rem 0.9rem; overflow-x: auto; font-family: var(--font-mono);
+    font-size: 0.8rem; color: var(--mt-strong); margin: 0.4rem 0;
+  }
+  .bug-md code { font-family: var(--font-mono); color: var(--mt-cyan); }
+  .bug-md pre code { color: inherit; }
+  .bug-md a { color: var(--mt-link); }
+  .bug-md img { max-width: 100%; border-radius: 6px; }
+</style>
+
+<div class="bugp">
+  <div class="bugp-header">
+    <span class="bugp-kicker"><i class="fas fa-bug"></i> Bug Bounty Program</span>
+    <h1 class="bugp-title">{{ challenge.name }}</h1>
+  </div>
+
+  <div class="bugp-grid">
+    <!-- Program info -->
+    <section class="bugp-col bugp-info">
+      {% if challenge.html %}
+      <div class="bugp-block">
+        <div class="bugp-label">Program Brief</div>
+        <div class="bug-md">{{ challenge.html }}</div>
+      </div>
+      {% endif %}
+
+      {% if challenge.scope %}
+      <div class="bugp-block">
+        <div class="bugp-label bugp-label-in"><i class="fas fa-crosshairs"></i> In Scope</div>
+        <pre class="bugp-scope">{{ challenge.scope }}</pre>
+      </div>
+      {% endif %}
+
+      {% if challenge.out_of_scope %}
+      <div class="bugp-block">
+        <div class="bugp-label bugp-label-out"><i class="fas fa-ban"></i> Out of Scope</div>
+        <pre class="bugp-scope oos">{{ challenge.out_of_scope }}</pre>
+      </div>
+      {% endif %}
+
+      <div class="bugp-block">
+        <div class="bugp-label">Rewards</div>
+        <div class="bugp-rewards">
+          <div class="bugp-reward sev-low"><span>Low</span><b>{{ challenge.reward_low or 0 }}</b></div>
+          <div class="bugp-reward sev-medium"><span>Medium</span><b>{{ challenge.reward_medium or 0 }}</b></div>
+          <div class="bugp-reward sev-high"><span>High</span><b>{{ challenge.reward_high or 0 }}</b></div>
+          <div class="bugp-reward sev-critical"><span>Critical</span><b>{{ challenge.reward_critical or 0 }}</b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Actions + reports -->
+    <section class="bugp-col bugp-actions">
+      <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+      <div id="bug-result" class="mb-3"></div>
+
+      <button id="bug-toggle-form" class="btn btn-primary w-100 bugp-submit-btn" type="button">
+        <i class="fas fa-bug"></i> Submit a Report
+      </button>
+
+      <div id="bug-form-wrap" style="display:none;">
+        <h5 class="bug-form-title">Submit a Vulnerability Report</h5>
+        <div class="bug-md-hint">
+          <i class="fas fa-circle-info"></i>
+          Markdown supported — fenced code blocks (```) for Burp requests / payloads,
+          <code>`inline code`</code> for affected endpoints, and links.
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Title <span class="text-danger">*</span></label>
+          <input id="bug-title" class="form-control" type="text" maxlength="256"
+                 placeholder="e.g. Stored XSS in profile bio leads to admin session theft">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Summary / Description <span class="text-danger">*</span></label>
+          <textarea id="bug-description" class="form-control" rows="4"
+                    placeholder="Affected endpoint, root cause, and what the vulnerability is."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Steps to Reproduce</label>
+          <textarea id="bug-steps" class="form-control" rows="6"
+                    placeholder="1. Navigate to /profile&#10;2. Send the request:&#10;&#96;&#96;&#96;&#10;POST /api/v1/bio HTTP/1.1&#10;...&#10;&#96;&#96;&#96;&#10;3. Observe payload execution"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Impact</label>
+          <textarea id="bug-impact" class="form-control" rows="2" placeholder="What can an attacker achieve?"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-sm-6 mb-3">
+            <label class="form-label">Evidence — Screenshots</label>
+            <input id="bug-files" class="form-control" type="file" accept="image/*" multiple>
+            <small class="text-muted">PNG/JPG/GIF/WebP, up to 5 files, 5&nbsp;MB each.</small>
+          </div>
+          <div class="col-sm-6 mb-3">
+            <label class="form-label">Video URL</label>
+            <input id="bug-video" class="form-control" type="url" placeholder="https://loom.com/... (optional)">
+          </div>
+        </div>
+        <div class="bug-form-actions">
+          <button id="bug-submit" class="btn btn-primary" type="button"><i class="fas fa-paper-plane"></i> Submit Report</button>
+          <button id="bug-cancel" class="btn btn-outline-secondary" type="button">Cancel</button>
+        </div>
+      </div>
+
+      <div id="bug-my-reports" class="bug-my-reports" data-challenge="{{ challenge.id }}">
+        <div class="bug-my-reports-head">Your Reports</div>
+        <div class="bug-my-reports-list"><small class="text-muted">Loading…</small></div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block input %}{% endblock %}
+{% block submit %}{% endblock %}
