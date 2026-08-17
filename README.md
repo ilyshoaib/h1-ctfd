@@ -2,7 +2,7 @@
 
 Turn [CTFd](https://github.com/CTFd/CTFd) into a **bug-bounty platform**. Instead
 of (or alongside) flag-based challenges, admins publish **targets** with scope,
-hunters submit full **vulnerability reports** - title, description, steps,
+hunters submit full **vulnerability reports** -- title, description, steps,
 impact, screenshot evidence, video link, all in markdown — and admins **triage
 and award points** that feed the normal CTFd scoreboard.
 
